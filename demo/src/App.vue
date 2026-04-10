@@ -1,9 +1,15 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted, nextTick } from "vue";
 import AddressForm from "./components/AddressForm.vue";
+import DemoOverlay from "./components/DemoOverlay.vue";
 import { providers } from "./providers";
 
 const formKey = ref(0);
+const demoOverlayRef = ref<InstanceType<typeof DemoOverlay> | null>(null);
+const demoActive = ref(false);
+const showReplay = ref(false);
+const DEMO_SEEN_KEY = "smart-address-demo-seen";
+const demoSeen = localStorage.getItem(DEMO_SEEN_KEY) === "1";
 
 const samples = [
   {
@@ -35,10 +41,42 @@ const samples = [
 ];
 
 const activeUrl = ref("");
+const demoUrl = ref(samples[Math.floor(Math.random() * samples.length)].url);
+
+function pickRandomDemoUrl() {
+  demoUrl.value = samples[Math.floor(Math.random() * samples.length)].url;
+}
 
 function trySample(url: string) {
+  demoActive.value = false;
+  showReplay.value = true;
   activeUrl.value = url;
   formKey.value++;
+}
+
+function onDemoTrigger(url: string) {
+  activeUrl.value = url;
+  formKey.value++;
+}
+
+function onDemoReset() {
+  activeUrl.value = "";
+  formKey.value++;
+}
+
+
+function replayDemo() {
+  showReplay.value = false;
+  demoActive.value = true;
+  pickRandomDemoUrl();
+  activeUrl.value = "";
+  formKey.value++;
+  document
+    .getElementById("address")
+    ?.scrollIntoView({ behavior: "smooth", block: "start" });
+  nextTick(() => {
+    demoOverlayRef.value?.start();
+  });
 }
 
 function scrollTo(id: string) {
@@ -46,13 +84,44 @@ function scrollTo(id: string) {
     .getElementById(id)
     ?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
+
+onMounted(() => {
+  if (demoSeen) {
+    showReplay.value = true;
+    return;
+  }
+  setTimeout(async () => {
+    demoActive.value = true;
+    await nextTick();
+    demoOverlayRef.value?.start();
+    localStorage.setItem(DEMO_SEEN_KEY, "1");
+  }, 800);
+});
 </script>
 
 <template>
   <div class="page">
     <!-- Hero -->
     <div class="hero">
-      <h1>Smart Address</h1>
+      <div class="hero-row">
+        <h1>Smart Address</h1>
+        <button v-if="showReplay" class="replay-btn" @click="replayDemo">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <polyline points="1 4 1 10 7 10" />
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+          </svg>
+          Replay demo
+        </button>
+      </div>
       <p class="tagline">
         Turns
         <a href="#supported" @click.prevent="scrollTo('supported')">
@@ -134,7 +203,19 @@ function scrollTo(id: string) {
     <!-- Form -->
     <section id="address" class="section">
       <h2>Address</h2>
-      <AddressForm :key="formKey" :initial-url="activeUrl" />
+      <div class="form-demo-wrapper">
+        <AddressForm :key="formKey" :initial-url="activeUrl" />
+        <DemoOverlay
+          ref="demoOverlayRef"
+          :demo-url="demoUrl"
+          @trigger-resolve="onDemoTrigger"
+          @reset-form="onDemoReset"
+          @animation-ended="
+            demoActive = false;
+            showReplay = true;
+          "
+        />
+      </div>
     </section>
 
     <!-- How it works -->
@@ -377,6 +458,40 @@ body {
   padding: 0.125rem 0.375rem;
   border-radius: 0.25rem;
   white-space: nowrap;
+}
+
+/* Hero row */
+.hero-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.replay-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #888;
+  background: none;
+  border: 1px solid #ddd;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.replay-btn:hover {
+  color: #333;
+  border-color: #999;
+  background: #f5f5f5;
+}
+
+/* Demo wrapper */
+.form-demo-wrapper {
+  position: relative;
 }
 
 /* Steps */

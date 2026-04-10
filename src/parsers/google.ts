@@ -1,7 +1,5 @@
 import type { Coordinates, ParsedLocation, UrlParser } from "../types";
 
-const LOG = "[smart-address:parser:google]";
-
 const GOOGLE_HOSTS = [
   "google.com",
   "google.co.uk",
@@ -123,17 +121,10 @@ export const googleParser: UrlParser = {
   parse(url: string): ParsedLocation | null {
     // 1. Parse the data param — this is the source of truth
     const data = parseDataParam(url);
-    console.log(`${LOG} Data param parsed:`, {
-      address: data.address || "(none)",
-      pinCoords: data.pinCoords || "(none)",
-    });
 
     // 2. Extract place name and viewport coords as fallbacks
     const placeName = extractPlaceName(url);
     const viewportCoords = extractViewportCoords(url);
-    console.log(
-      `${LOG} Place name: ${placeName || "(none)"}, Viewport: ${viewportCoords ? `${viewportCoords.lat},${viewportCoords.lng}` : "(none)"}`,
-    );
 
     // Priority:
     // - pinCoordinates from data param (exact place pin)
@@ -142,14 +133,11 @@ export const googleParser: UrlParser = {
 
     if (!coordinates && !data.address && !placeName) return null;
 
-    const result: ParsedLocation = {
+    return {
       coordinates,
       placeName,
       embeddedAddress: data.address,
       pinCoordinates: data.pinCoords,
     };
-
-    console.log(`${LOG} Final parsed result:`, result);
-    return result;
   },
 };

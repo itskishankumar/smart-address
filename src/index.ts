@@ -9,8 +9,6 @@ import { expandUrl, isShortUrl } from "./expander";
 import { geocode } from "./geocoders";
 export type { SmartAddress, SmartAddressConfig, MapProvider, ParsedMapUrl };
 
-const LOG = "[smart-address]";
-
 const MAP_URL_PATTERN =
   /^https?:\/\/(maps\.|www\.)?(google|apple|openstreetmap|osm|bing|here|yandex|goo\.gl|maps\.app)/i;
 
@@ -33,7 +31,6 @@ export function isMapUrl(text: string): boolean {
       (h.includes("bing.com") && u.pathname.includes("/maps")) ||
       h.includes("here.com") ||
       (h.includes("yandex") && u.pathname.includes("/maps"));
-    console.log(`${LOG} isMapUrl → ${result}`);
     return result;
   } catch {
     return false;
@@ -45,24 +42,16 @@ export async function resolveMapUrl(
   config?: SmartAddressConfig,
 ): Promise<SmartAddress> {
   let resolvedUrl = url.trim();
-  console.group(`${LOG} resolveMapUrl`);
-  console.log(`${LOG} Input URL:`, resolvedUrl);
 
   // Step 1: Expand short URLs
   if (isShortUrl(resolvedUrl)) {
-    console.log(`${LOG} [Step 1] Short URL detected, expanding...`);
-    const original = resolvedUrl;
     resolvedUrl = await expandUrl(resolvedUrl, config?.expandUrl);
-    console.log(`${LOG} [Step 1] Expanded: "${original}" → "${resolvedUrl}"`);
-  } else {
-    console.log(`${LOG} [Step 1] Not a short URL, skipping`);
   }
 
   // Step 2: Detect provider and parse
   const parser = detectParser(resolvedUrl);
   if (!parser) {
-    console.error(`${LOG} [Step 2] No parser matched`);
-    console.groupEnd();
+    console.error(`[smart-address] [Step 2] No parser matched`);
     throw new Error(
       `Unsupported map URL: could not detect provider for "${resolvedUrl}"`,
     );
@@ -70,28 +59,17 @@ export async function resolveMapUrl(
 
   const parsed = parser.parse(resolvedUrl);
   if (!parsed) {
-    console.error(`${LOG} [Step 2] Parser returned null`);
-    console.groupEnd();
+    console.error(`[smart-address] [Step 2] Parser returned null`);
     throw new Error(`Could not parse URL: "${resolvedUrl}"`);
   }
 
   const { coordinates, placeName, embeddedAddress, pinCoordinates } = parsed;
 
-  console.log(`${LOG} [Step 2] Parsed:`, {
-    provider: parser.provider,
-    embeddedAddress: embeddedAddress || "(none)",
-    pinCoordinates: pinCoordinates || "(none)",
-    placeName: placeName || "(none)",
-    viewportCoords:
-      coordinates && !pinCoordinates ? coordinates : "(using pin coords)",
-  });
-
   // Use pin coordinates (from data param) over viewport coordinates
   const bestCoords = pinCoordinates || coordinates;
 
   if (!bestCoords && !embeddedAddress && !placeName) {
-    console.error(`${LOG} [Step 2] Nothing to geocode`);
-    console.groupEnd();
+    console.error(`[smart-address] [Step 2] Nothing to geocode`);
     throw new Error(`Could not extract location from URL: "${resolvedUrl}"`);
   }
 
@@ -102,8 +80,7 @@ export async function resolveMapUrl(
       bestCoords.lng < -180 ||
       bestCoords.lng > 180)
   ) {
-    console.error(`${LOG} [Step 2] Invalid coordinates:`, bestCoords);
-    console.groupEnd();
+    console.error(`[smart-address] [Step 2] Invalid coordinates:`, bestCoords);
     throw new Error(
       `Invalid coordinates: lat=${bestCoords.lat}, lng=${bestCoords.lng}`,
     );
@@ -117,33 +94,15 @@ export async function resolveMapUrl(
   //   3. Place name → forward geocode
   //   4. Viewport coordinates → reverse geocode (least accurate)
 
-  let strategy: string;
   let geocodeAddress: string | undefined;
   let geocodeCoords = bestCoords;
 
   if (embeddedAddress) {
-    strategy = "EMBEDDED_ADDRESS";
     geocodeAddress = embeddedAddress;
-    console.log(
-      `${LOG} [Step 3] Strategy: EMBEDDED_ADDRESS — geocoding "${embeddedAddress}"`,
-    );
   } else if (pinCoordinates) {
-    strategy = "PIN_COORDINATES";
     geocodeCoords = pinCoordinates;
-    console.log(
-      `${LOG} [Step 3] Strategy: PIN_COORDINATES — reverse geocoding exact pin ${pinCoordinates.lat},${pinCoordinates.lng}`,
-    );
   } else if (placeName) {
-    strategy = "PLACE_NAME";
     geocodeAddress = placeName;
-    console.log(
-      `${LOG} [Step 3] Strategy: PLACE_NAME — forward geocoding "${placeName}"`,
-    );
-  } else {
-    strategy = "VIEWPORT_COORDS";
-    console.log(
-      `${LOG} [Step 3] Strategy: VIEWPORT_COORDS — reverse geocoding viewport center ${bestCoords!.lat},${bestCoords!.lng}`,
-    );
   }
 
   const address = await geocode(
@@ -155,27 +114,8 @@ export async function resolveMapUrl(
 
   // If the geocoder didn't return a building name but we have a place name from the URL, use it
   if (!address.buildingName && placeName) {
-    console.log(
-      `${LOG} [Step 3] Geocoder returned no buildingName — using URL place name: "${placeName}"`,
-    );
     address.buildingName = placeName;
   }
-
-  console.log(
-    `${LOG} [Step 3] Done. Strategy: ${strategy}, Geocoder: "${address.geocoder}"`,
-  );
-  console.log(`${LOG} Final address:`, {
-    street1: address.street1,
-    street2: address.street2,
-    neighborhood: address.neighborhood,
-    city: address.city,
-    state: address.state,
-    postalCode: address.postalCode,
-    country: address.country,
-    countryName: address.countryName,
-    formatted: address.formatted,
-  });
-  console.groupEnd();
 
   return address;
 }
@@ -183,9 +123,7 @@ export async function resolveMapUrl(
 export function detectProvider(url: string): MapProvider | null {
   try {
     const parser = detectParser(url.trim());
-    const result = parser?.provider ?? null;
-    console.log(`${LOG} detectProvider → ${result}`);
-    return result;
+    return parser?.provider ?? null;
   } catch {
     return null;
   }

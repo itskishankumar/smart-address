@@ -50,24 +50,17 @@ export function useSmartAddress() {
 
   async function handlePaste(text: string): Promise<boolean> {
     const trimmed = text.trim();
-    console.group("[useSmartAddress] handlePaste");
-    console.log("Input text:", trimmed);
 
     if (!isMapUrl(trimmed)) {
-      console.log("Not a map URL — ignoring");
-      console.groupEnd();
       return false;
     }
 
     loading.value = true;
     error.value = null;
     provider.value = detectProvider(trimmed);
-    console.log("Detected provider:", provider.value);
 
     try {
-      console.time("[useSmartAddress] resolveMapUrl");
       const address = await resolveMapUrl(trimmed);
-      console.timeEnd("[useSmartAddress] resolveMapUrl");
 
       resolved.value = address;
       provider.value = address.provider;
@@ -82,13 +75,10 @@ export function useSmartAddress() {
       fields.postalCode = address.postalCode;
       fields.country = address.countryName || address.country;
 
-      console.log("Fields populated:", { ...fields });
-      console.groupEnd();
       loading.value = false;
       return true;
     } catch (err) {
       console.error("[useSmartAddress] Error:", err);
-      console.groupEnd();
       error.value = (err as Error).message;
       loading.value = false;
       return false;

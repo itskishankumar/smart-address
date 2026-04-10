@@ -31,15 +31,12 @@ interface NominatimResponse {
   address?: NominatimAddress;
 }
 
-const LOG = "[smart-address:normalize:nominatim]";
-
 export function normalizeNominatim(
   raw: NominatimResponse,
   coords: Coordinates,
   provider: MapProvider,
 ): SmartAddress {
   const a = raw.address || {};
-  console.log(`${LOG} Raw address fields:`, a);
 
   const houseNumber = a.house_number || "";
   const road = a.road || "";
@@ -48,9 +45,6 @@ export function normalizeNominatim(
   let street1 = [houseNumber, road].filter(Boolean).join(" ");
   if (!street1) {
     street1 = a.residential || a.hamlet || "";
-    console.log(`${LOG} No house_number+road — using fallback: "${street1}"`);
-  } else {
-    console.log(`${LOG} Street from house_number+road: "${street1}"`);
   }
 
   const city = a.city || a.town || a.village || a.municipality || "";

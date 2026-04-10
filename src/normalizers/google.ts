@@ -26,8 +26,6 @@ function getComponent(
     : { long: "", short: "" };
 }
 
-const LOG = "[smart-address:normalize:google]";
-
 export function normalizeGoogle(
   raw: GoogleResponse,
   coords: Coordinates,
@@ -35,7 +33,6 @@ export function normalizeGoogle(
 ): SmartAddress {
   const result = raw.results?.[0];
   const components = result?.address_components || [];
-  console.log(`${LOG} Normalizing ${components.length} address components`);
 
   const streetNumber = getComponent(components, "street_number").long;
   const route = getComponent(components, "route").long;
@@ -59,35 +56,12 @@ export function normalizeGoogle(
   const postalCode = getComponent(components, "postal_code").long;
   const country = getComponent(components, "country");
 
-  console.log(`${LOG} Extracted components:`, {
-    streetNumber,
-    route,
-    subpremise,
-    premise,
-    establishment,
-    pointOfInterest,
-    neighborhood,
-    sublocalityL1,
-    sublocalityL2,
-    sublocalityL3,
-    sublocality,
-    city,
-    state: state.long,
-    postalCode,
-    country: country.long,
-  });
-
   // Street address: prefer street_number + route (Western style)
   // Fallback: use sublocality levels (common in India, Japan, Korea, etc.)
   let street1 = [streetNumber, route].filter(Boolean).join(" ");
   if (!street1) {
     const parts = [sublocalityL3, sublocalityL2].filter(Boolean);
     street1 = parts.join(", ");
-    console.log(
-      `${LOG} No street_number+route — using sublocality fallback: "${street1}"`,
-    );
-  } else {
-    console.log(`${LOG} Street from street_number+route: "${street1}"`);
   }
 
   // buildingName: place/premise/establishment name
