@@ -1,0 +1,51 @@
+{
+  "name": "smart-address",
+  "version": "0.1.0",
+  "description": "Any maps URL in, structured address out. Supports Google Maps, Apple Maps, OpenStreetMap, Bing, HERE, and Yandex.",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "README.md",
+    "SUPPORTED_FORMATS.md"
+  ],
+  "workspaces": [
+    "demo"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "npm -w demo run dev",
+    "format": "prettier --write \"**/*.{ts,vue,json}\""
+  },
+  "devDependencies": {
+    "prettier": "^3.8.2",
+    "tsup": "^8.0.0",
+    "typescript": "~6.0.2"
+  },
+  "keywords": [
+    "address",
+    "geocoding",
+    "google-maps",
+    "apple-maps",
+    "openstreetmap",
+    "reverse-geocode",
+    "maps-url",
+    "address-parser"
+  ],
+  "license": "MIT"
+}
