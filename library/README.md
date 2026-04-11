@@ -1,4 +1,4 @@
-# Smart Address
+# smart-address
 
 Turns any maps URL into a structured, form-ready address.
 
@@ -20,18 +20,11 @@ https://www.google.com/maps/place/Target/@33.79,-118.12,17z/data=...!2s5551+E+Ro
 
 Supports Google Maps, Apple Maps, OpenStreetMap, Bing, HERE, and Yandex — full URLs, shortened links, and URLs with embedded data params.
 
-## Repository Layout
+## Install
 
-This repo contains three independent projects, each with its own `package.json`:
-
+```bash
+npm install smart-address
 ```
-smart-address/
-├── library/     The actual library — TS source, compiled to dist/ with plain `tsc`.
-├── demo/        Vue 3 + Vite demo app that imports the library directly.
-└── api/         Serverless endpoint (Vercel) that returns SmartAddress JSON.
-```
-
-The library is consumed by `demo/` and `api/` via a `file:../library` dependency. No workspaces, no bundler — just `tsc`. Each consumer has a `postinstall` hook (`cd ../library && npm install && npm run build`) so the library's `dist/` is produced automatically on `npm install` in either project, both locally and on Vercel.
 
 ## Usage
 
@@ -55,11 +48,11 @@ address.postalCode    // "400001"
 address.country       // "IN"
 ```
 
-### Short URL Expansion — mandatory
+### Short URL expansion — mandatory
 
-Shortened links (`maps.app.goo.gl`, `binged.it`, `bit.ly`, etc.) require following HTTP redirects across origins — something browsers block due to CORS. **The library does not expand shortlinks on its own.** If you pass a short URL without an `expandUrl` callback, `resolveMapUrl()` throws.
+Shortened links (`maps.app.goo.gl`, `binged.it`, `bit.ly`, etc.) require following HTTP redirects across origins — something browsers block due to CORS. **The library does not expand shortlinks on its own.** Pass a short URL without an `expandUrl` callback and `resolveMapUrl()` throws.
 
-You must provide the callback yourself:
+**Browser** — proxy the expansion through your own server:
 
 ```ts
 const address = await resolveMapUrl(shortUrl, {
@@ -72,20 +65,18 @@ const address = await resolveMapUrl(shortUrl, {
 });
 ```
 
-#### Node-side expander (no HTTP hop)
-
-When running server-side (Vercel functions, Node scripts), you don't need an HTTP proxy — the library ships a Node-native redirect-follower at the `smart-address/node` subpath:
+**Node** — use the built-in redirect-follower at the `smart-address/node` subpath, no HTTP hop:
 
 ```ts
 import { resolveMapUrl } from "smart-address";
 import { expandShortUrl } from "smart-address/node";
 
 const address = await resolveMapUrl(shortUrl, {
-  expandUrl: expandShortUrl, // follows redirects via Node's http/https modules
+  expandUrl: expandShortUrl,
 });
 ```
 
-### API Keys
+### API keys
 
 Provider API keys unlock native geocoding APIs (Google, Bing, HERE, Yandex) instead of the Nominatim fallback.
 
@@ -132,7 +123,7 @@ Without any keys, everything falls back to Nominatim (free, no key needed).
 }
 ```
 
-## How It Works
+## How it works
 
 ```
 URL → detect provider → expand if shortened → parse → geocode → normalize
@@ -148,71 +139,6 @@ URL → detect provider → expand if shortened → parse → geocode → normal
 **Geocoding strategy**: If an embedded address or place name is found, the library forward geocodes it to get exact coordinates, then reverse geocodes those coordinates for full structured components. If only coordinates are available, it reverse geocodes directly.
 
 See [SUPPORTED_FORMATS.md](./SUPPORTED_FORMATS.md) for every vendor and URL format.
-
-## Project: `library/`
-
-TypeScript library compiled with plain `tsc` — no bundler, no tsup.
-
-```
-library/
-├── src/
-│   ├── index.ts           resolveMapUrl(), isMapUrl(), detectProvider()
-│   ├── node.ts            expandShortUrl(), isAllowedHost() — Node-only
-│   ├── types.ts           SmartAddress, SmartAddressConfig, MapProvider
-│   ├── parsers/           URL parsers (one per provider)
-│   ├── geocoders/         Reverse/forward geocoding API clients
-│   └── normalizers/       Response → SmartAddress mappers
-├── dist/                  Output of `tsc` — .js + .d.ts. Exports point here.
-├── package.json           exports: { ".", "./node" }
-└── tsconfig.json
-```
-
-Build: `cd library && npm install && npm run build`. Consumers do this automatically via their `postinstall` hook, so you rarely need to run it by hand.
-
-## Project: `demo/`
-
-Vue 3 + Vite SPA that imports the library directly and calls its own `/api/expand` endpoint for shortlink expansion.
-
-```
-demo/
-├── src/                   Vue app (components, composables, providers)
-├── api/expand.ts          Shortlink proxy — Vercel function in prod,
-│                          also called by the Vite dev middleware
-├── vite.config.ts         Includes the dev middleware that mounts /api/expand
-├── package.json           depends on smart-address via "file:../library"
-└── tsconfig.json
-```
-
-Run the demo:
-
-```bash
-cd demo
-npm install
-npm run dev       # http://localhost:5173
-# npm run build   # → dist/
-```
-
-Paste any maps URL into any form field — it detects the provider, resolves the address, and fills all fields. Includes sample URLs for each supported provider.
-
-## Project: `api/`
-
-Single Vercel serverless function: `GET /api/normalize?url=<maps-url>` → `SmartAddress` JSON.
-
-```
-api/
-├── normalize.ts           Handler: resolveMapUrl() + expandShortUrl from "smart-address/node"
-├── package.json
-├── tsconfig.json
-└── vercel.json
-```
-
-Shortlink expansion runs in-process via `smart-address/node` — no HTTP self-call. Set `GOOGLE_MAPS_API_KEY` (and any other provider keys) via Vercel project env vars or a local `.env`.
-
-Local test with any TS runner (`npx tsx`, `vercel dev`, etc.):
-
-```bash
-curl "http://localhost:3000/api/normalize?url=https://maps.app.goo.gl/TUgLTcyjfzxtz9tm9"
-```
 
 ## License
 

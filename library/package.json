@@ -1,0 +1,45 @@
+{
+  "name": "smart-address",
+  "version": "0.1.3",
+  "description": "Any maps URL in, structured address out. Supports Google Maps, Apple Maps, OpenStreetMap, Bing, HERE, and Yandex.",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/itskishankumar/smart-address"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./node": {
+      "types": "./dist/node.d.ts",
+      "default": "./dist/node.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "SUPPORTED_FORMATS.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build",
+    "release": "npm publish"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "typescript": "~6.0.2"
+  },
+  "keywords": [
+    "address",
+    "geocoding",
+    "google-maps",
+    "apple-maps",
+    "openstreetmap",
+    "reverse-geocode",
+    "maps-url",
+    "address-parser"
+  ],
+  "license": "MIT"
+}

@@ -64,7 +64,6 @@ function onDemoReset() {
   formKey.value++;
 }
 
-
 function replayDemo() {
   showReplay.value = false;
   demoActive.value = true;
@@ -273,7 +272,9 @@ onMounted(() => {
     <section id="supported" class="section" style="margin-bottom: 0">
       <p class="hint" style="margin-bottom: 0">
         See
-        <a href="../../SUPPORTED_FORMATS.md" target="_blank"
+        <a
+          href="https://github.com/itskishankumar/smart-address/blob/main/SUPPORTED_FORMATS.md"
+          target="_blank"
           >SUPPORTED_FORMATS.md</a
         >
         for every vendor and URL format.

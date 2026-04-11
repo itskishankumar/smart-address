@@ -7,7 +7,7 @@ import {
   type MapProvider,
 } from "smart-address";
 
-export interface AddressFields {
+interface AddressFields {
   buildingName: string;
   street1: string;
   street2: string;
@@ -60,7 +60,18 @@ export function useSmartAddress() {
     provider.value = detectProvider(trimmed);
 
     try {
-      const address = await resolveMapUrl(trimmed);
+      const address = await resolveMapUrl(trimmed, {
+        expandUrl: async (url) => {
+          const res = await fetch(
+            `/api/expand?url=${encodeURIComponent(url)}`,
+          );
+          if (!res.ok) {
+            throw new Error(`Failed to expand URL: ${res.statusText}`);
+          }
+          const data = await res.json();
+          return data.finalUrl || url;
+        },
+      });
 
       resolved.value = address;
       provider.value = address.provider;
