@@ -260,10 +260,12 @@ onMounted(() => {
       <div class="info-box">
         <p>
           Shortened links (<code>maps.app.goo.gl</code>, <code>binged.it</code>,
-          etc.) require a server-side proxy to expand — browsers block
-          cross-origin redirect following due to CORS. This demo includes a
-          built-in proxy. When using the library standalone, provide your own
-          expansion logic via the <code>expandUrl</code> config callback.
+          etc.) require following HTTP redirects across origins — something
+          browsers block due to CORS. This demo calls a hosted API that
+          resolves shortlinks server-side. When using the library standalone,
+          provide your own expansion logic via the <code>expandUrl</code>
+          config callback (or use <code>smart-address/node</code> in a Node
+          environment).
         </p>
       </div>
     </section>

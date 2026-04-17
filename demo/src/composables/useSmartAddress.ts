@@ -1,11 +1,13 @@
 import { ref, reactive } from "vue";
 import {
-  resolveMapUrl,
   isMapUrl,
   detectProvider,
   type SmartAddress,
   type MapProvider,
 } from "smart-address";
+
+const API_BASE =
+  import.meta.env.VITE_SMART_ADDRESS_API || "https://smart-address-api.vercel.app";
 
 interface AddressFields {
   buildingName: string;
@@ -60,18 +62,16 @@ export function useSmartAddress() {
     provider.value = detectProvider(trimmed);
 
     try {
-      const address = await resolveMapUrl(trimmed, {
-        expandUrl: async (url) => {
-          const res = await fetch(
-            `/api/expand?url=${encodeURIComponent(url)}`,
-          );
-          if (!res.ok) {
-            throw new Error(`Failed to expand URL: ${res.statusText}`);
-          }
-          const data = await res.json();
-          return data.finalUrl || url;
-        },
-      });
+      const res = await fetch(
+        `${API_BASE}/api/normalize?url=${encodeURIComponent(trimmed)}`,
+      );
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(
+          body?.error || `API request failed: ${res.status} ${res.statusText}`,
+        );
+      }
+      const address = (await res.json()) as SmartAddress;
 
       resolved.value = address;
       provider.value = address.provider;
