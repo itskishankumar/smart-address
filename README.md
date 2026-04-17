@@ -33,6 +33,14 @@ smart-address/
 
 The library is consumed by `demo/` and `api/` via a `file:../library` dependency. No workspaces, no bundler — just `tsc`. Each consumer has a `postinstall` hook (`cd ../library && npm install && npm run build`) so the library's `dist/` is produced automatically on `npm install` in either project, both locally and on Vercel.
 
+## Install
+
+```bash
+npm install smart-address
+```
+
+Requires Node 18+ (or any modern bundler for browser use). ESM only.
+
 ## Usage
 
 ```ts

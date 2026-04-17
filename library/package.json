@@ -19,8 +19,7 @@
   },
   "files": [
     "dist",
-    "README.md",
-    "SUPPORTED_FORMATS.md"
+    "README.md"
   ],
   "scripts": {
     "build": "tsc",

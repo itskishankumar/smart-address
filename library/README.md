@@ -138,7 +138,7 @@ URL → detect provider → expand if shortened → parse → geocode → normal
 
 **Geocoding strategy**: If an embedded address or place name is found, the library forward geocodes it to get exact coordinates, then reverse geocodes those coordinates for full structured components. If only coordinates are available, it reverse geocodes directly.
 
-See [SUPPORTED_FORMATS.md](./SUPPORTED_FORMATS.md) for every vendor and URL format.
+See [SUPPORTED_FORMATS.md](https://github.com/itskishankumar/smart-address/blob/main/SUPPORTED_FORMATS.md) for every vendor and URL format.
 
 ## License
 
