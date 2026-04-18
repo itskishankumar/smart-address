@@ -9,6 +9,21 @@ import {
 const API_BASE =
   import.meta.env.VITE_SMART_ADDRESS_API || "https://smart-address-api.vercel.app";
 
+/**
+ * Fire a GoatCounter custom event. No-op if the script hasn't loaded yet
+ * (e.g. blocked by an ad-blocker) or if we're running in SSR/dev.
+ * https://www.goatcounter.com/help/events
+ */
+function trackEvent(name: string, extra?: Record<string, string>) {
+  const gc = (window as any)?.goatcounter;
+  if (!gc?.count) return;
+  gc.count({
+    path: name,
+    title: extra ? Object.entries(extra).map(([k, v]) => `${k}=${v}`).join(", ") : undefined,
+    event: true,
+  });
+}
+
 interface AddressFields {
   buildingName: string;
   street1: string;
@@ -86,11 +101,19 @@ export function useSmartAddress() {
       fields.postalCode = address.postalCode;
       fields.country = address.countryName || address.country;
 
+      trackEvent("resolve-success", {
+        provider: address.provider,
+        geocoder: address.geocoder,
+      });
+
       loading.value = false;
       return true;
     } catch (err) {
       console.error("[useSmartAddress] Error:", err);
       error.value = (err as Error).message;
+      trackEvent("resolve-error", {
+        provider: provider.value || "unknown",
+      });
       loading.value = false;
       return false;
     }
